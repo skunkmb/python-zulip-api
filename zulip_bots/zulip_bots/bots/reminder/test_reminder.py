@@ -5,6 +5,11 @@ from mock import patch
 class TestReminderBot(BotTestCase):
     bot_name = "reminder"
 
+    # 'Foo Test User' must be used because it's the name used in
+    # `make_request_message` in `test_lib`.
+    sender_name = 'Foo Test User'
+    sender_mention = '@**' + sender_name + '** '
+
     def _test(self, request: str, response: str):
         with patch('threading.Timer') as timer:
             # This is similar to `verify_reply` in `BotTestCase`, but with a
@@ -38,13 +43,13 @@ class TestReminderBot(BotTestCase):
         self._test('"Walk the dog." at 11:59 p.m.', 'Walk the dog.')
 
     def test_advanced_mode_public(self):
-        self._test('"Walk the dog." public', 'Walk the dog.')
+        self._test('"Walk the dog." public', self.sender_mention + 'Walk the dog.')
 
     def test_advanced_mode_delay_public(self):
-        self._test('"Walk the dog." in 8 minutes public', 'Walk the dog.')
+        self._test('"Walk the dog." in 8 minutes public', self.sender_mention + 'Walk the dog.')
 
     def test_advanced_mode_time_public(self):
-        self._test('"Walk the dog." at 11:59 p.m. public', 'Walk the dog.')
+        self._test('"Walk the dog." at 11:59 p.m. public', self.sender_mention + 'Walk the dog.')
 
     def test_bad_time(self):
         self._test('"Walk the dog." at 13:64 p.m.', 'Sorry, that time doesn\'t make sense.')

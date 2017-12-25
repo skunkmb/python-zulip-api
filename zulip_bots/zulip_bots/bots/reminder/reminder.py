@@ -80,6 +80,7 @@ class ReminderHandler(object):
     def handle_message(self, message: Dict[str, str], bot_handler: Any) -> None:
         content = message['content']
         sender = message['sender_email']
+        sender_name = message['sender_full_name']
 
         reminder_advanced_match = REMINDER_ADVANCED_REGEX.match(content)
 
@@ -130,7 +131,8 @@ class ReminderHandler(object):
 
             def remind():
                 if is_public:
-                    bot_handler.send_reply(message, reminder)
+                    mention = '@**' + sender_name + '** '
+                    bot_handler.send_reply(message, mention + reminder)
                 else:
                     bot_handler.send_message(dict(
                         type='private',
