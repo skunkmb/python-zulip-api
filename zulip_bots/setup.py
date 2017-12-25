@@ -49,6 +49,7 @@ setuptools_info = dict(
     install_requires=[
         'zulip',
         'mock>=2.0.0',
+        'python-dateutil',  # for bots/reminder
         'html2text',  # for bots/define
         'BeautifulSoup4',  # for bots/googlesearch
         'lxml',  # for bots/googlesearch

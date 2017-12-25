@@ -1,5 +1,9 @@
 import threading
 import re
+import dateutil
+import dateutil.parser
+import dateutil.tz
+import datetime
 from typing import Any, Dict
 
 # The "advanced" regex has options for time and whether reminder is public or
@@ -7,7 +11,8 @@ from typing import Any, Dict
 # Reminder Bot is sent back after a delay.
 REMINDER_ADVANCED_REGEX = re.compile(
     '"(?P<reminder>.+)"'
-    '( in (?P<time>\d+) (?P<unit>(s|sec|secs|second|seconds|min|mins|minute|minutes)))?'
+    '(( in (?P<delay>\d+) (?P<unit>(s|sec|secs|second|seconds|min|mins|minute|minutes)))|'
+    '( at (?P<time>.+?)))?'
     '(?P<public> public)?'
     '$'
 )
@@ -38,11 +43,11 @@ For example,
 
 or
 
- > @**Reminder Bot** "Water the plants." in 20 mins
+ > @**Reminder Bot** "Water the plants." in 20 seconds
 
 or even
 
- > @**Reminder Bot** "Water the plants." in 20 seconds
+ > @**Reminder Bot** "Water the plants." at 6:13
 
 …and then in a private message…
 
@@ -58,7 +63,7 @@ You can also do
 
 Or, you can do both at once
 
- > @**Reminder Bot** "Make the bed." in 20 minutes public
+ > @**Reminder Bot** "Make the bed." at 8:26 public
 
 …and then, in the current stream 30 minutes later…
 
@@ -81,13 +86,40 @@ class ReminderHandler(object):
         if content == 'help' or content == '':
             bot_handler.send_reply(message, HELP_RESPONSE)
         elif reminder_advanced_match:
-            # The default time is 5 minutes.
-            unconverted_time = int(reminder_advanced_match.group('time') or 5)
-            is_minutes = (
-                (reminder_advanced_match.group('unit') or 'minutes')
-                in ["min", "mins", "minute", "minutes"]
-            )
-            time = unconverted_time * 60 if is_minutes else unconverted_time
+            # The default delay is 5 minutes.
+            delay = 5 * 60
+
+            # If they listed a delay using the `in <delay> <unit>` syntax, use
+            # it.
+            if reminder_advanced_match.group('delay'):
+                unconverted_delay = delay
+                try:
+                    unconverted_delay = int(reminder_advanced_match.group('delay'))
+                except ValueError:
+                    bot_handler.send_reply(message, 'Sorry, that time doesn\'t make sense.')
+                    return
+
+                is_minutes = (
+                    (reminder_advanced_match.group('unit'))
+                    in ["min", "mins", "minute", "minutes"]
+                )
+                delay = unconverted_delay * 60 if is_minutes else unconverted_delay
+            # If they didn't, see if they listed an exact time.
+            elif reminder_advanced_match.group('time'):
+                time = datetime.datetime.now() + datetime.timedelta(seconds=delay)
+                try:
+                    time = dateutil.parser.parse(reminder_advanced_match.group('time'))
+                except ValueError:
+                    bot_handler.send_reply(message, 'Sorry, that time doesn\'t make sense.')
+                    return
+
+                now = datetime.datetime.now()
+                difference = (time - now)
+                if difference < datetime.timedelta(0):
+                    bot_handler.send_reply(message, 'Sorry, the time can\'t be in the past.')
+                    return
+
+                delay = difference.total_seconds()
 
             # If it's "public" the reminder will be sent in the same stream as
             # the user who messaged Reminder Bot. If it's "private" it will
@@ -106,7 +138,7 @@ class ReminderHandler(object):
                         content=reminder
                     ))
 
-            threading.Timer(time, remind).start()
+            threading.Timer(delay, remind).start()
         else:
             # If the "advanced" mode doesn't match, just send back the whole
             # message that was sent to Reminder Bot.
@@ -117,7 +149,7 @@ class ReminderHandler(object):
                     content=content
                 ))
 
-            # The default time is 5 minutes.
+            # The default delay is 5 minutes.
             threading.Timer(5 * 60, remind).start()
 
 handler_class = ReminderHandler

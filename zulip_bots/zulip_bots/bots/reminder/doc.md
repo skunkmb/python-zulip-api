@@ -33,11 +33,11 @@ For example,
 
 or
 
- > @**Reminder Bot** "Water the plants." in 20 mins
+ > @**Reminder Bot** "Water the plants." in 20 seconds
 
 or even
 
- > @**Reminder Bot** "Water the plants." in 20 seconds
+ > @**Reminder Bot** "Water the plants." at 6:13
 
 …and then in a private message…
 
@@ -53,7 +53,7 @@ You can also do
 
 Or, you can do both at once
 
- > @**Reminder Bot** "Make the bed." in 20 minutes public
+ > @**Reminder Bot** "Make the bed." at 8:26 public
 
 …and then, in the current stream 30 minutes later…
 
