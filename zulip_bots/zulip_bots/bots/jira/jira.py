@@ -178,7 +178,7 @@ class JiraHandler(object):
             jira_response = requests.post(
                 self.domain_with_protocol + '/rest/api/2/issue',
                 headers={'Authorization': self.auth, 'Content-type': 'application/json'},
-                data=make_create_json(create_match.group('summary'),
+                data=make_create_data(create_match.group('summary'),
                                       create_match.group('project_key'),
                                       create_match.group('type_name'),
                                       create_match.group('description'),
@@ -203,7 +203,7 @@ class JiraHandler(object):
             jira_response = requests.put(
                 self.domain_with_protocol + '/rest/api/2/issue/' + key,
                 headers={'Authorization': self.auth, 'Content-type': 'application/json'},
-                data=make_edit_json(edit_match.group('summary'),
+                data=make_edit_data(edit_match.group('summary'),
                                     edit_match.group('project_key'),
                                     edit_match.group('type_name'),
                                     edit_match.group('description'),
@@ -239,11 +239,11 @@ def make_jira_auth(username: str, password: str) -> str:
     encoded = base64.b64encode(combo.encode('utf-8')).decode('utf-8')
     return 'Basic ' + encoded
 
-def make_create_json(summary: str, project_key: str, type_name: str,
+def make_create_data(summary: str, project_key: str, type_name: str,
                      description: Optional[str], assignee: Optional[str],
                      priority_name: Optional[str], labels: Optional[str],
                      due_date: Optional[str]) -> Any:
-    '''Makes a JSON string for the Jira REST API editing endpoint based on
+    '''Makes a dictionary for the Jira REST API creation endpoint based on
     fields that could be edited.
 
     Parameters:
@@ -257,7 +257,7 @@ def make_create_json(summary: str, project_key: str, type_name: str,
                           comma-spaces.
      - due_date (optional): The Jira due date property.
     '''
-    json_fields = {
+    data_fields = {
         'summary': summary,
         'project': {
             'key': project_key
@@ -267,25 +267,25 @@ def make_create_json(summary: str, project_key: str, type_name: str,
         }
     }
     if description:
-        json_fields['description'] = description
+        data_fields['description'] = description
     if assignee:
-        json_fields['assignee'] = {'name': assignee}
+        data_fields['assignee'] = {'name': assignee}
     if priority_name:
-        json_fields['priority'] = {'name': priority_name}
+        data_fields['priority'] = {'name': priority_name}
     if labels:
-        json_fields['labels'] = labels.split(', ')
+        data_fields['labels'] = labels.split(', ')
     if due_date:
-        json_fields['duedate'] = due_date
+        data_fields['duedate'] = due_date
 
-    json = {'fields': json_fields}
+    data = {'fields': data_fields}
 
-    return json
+    return data
 
-def make_edit_json(summary: Optional[str], project_key: Optional[str],
+def make_edit_data(summary: Optional[str], project_key: Optional[str],
                    type_name: Optional[str], description: Optional[str],
                    assignee: Optional[str], priority_name: Optional[str],
                    labels: Optional[str], due_date: Optional[str]) -> Any:
-    '''Makes a JSON string for the Jira REST API editing endpoint based on
+    '''Makes a dictionary for the Jira REST API editing endpoint based on
     fields that could be edited.
 
     Parameters:
@@ -299,28 +299,28 @@ def make_edit_json(summary: Optional[str], project_key: Optional[str],
                           comma-spaces.
      - due_date (optional): The Jira due date property.
     '''
-    json_fields = {}
+    data_fields = {}
 
     if summary:
-        json_fields['summary'] = summary
+        data_fields['summary'] = summary
     if project_key:
-        json_fields['project'] = {'key': project_key}
+        data_fields['project'] = {'key': project_key}
     if type_name:
-        json_fields['issuetype'] = {'name': type_name}
+        data_fields['issuetype'] = {'name': type_name}
     if description:
-        json_fields['description'] = description
+        data_fields['description'] = description
     if assignee:
-        json_fields['assignee'] = {'name': assignee}
+        data_fields['assignee'] = {'name': assignee}
     if priority_name:
-        json_fields['priority'] = {'name': priority_name}
+        data_fields['priority'] = {'name': priority_name}
     if labels:
-        json_fields['labels'] = labels.split(', ')
+        data_fields['labels'] = labels.split(', ')
     if due_date:
-        json_fields['duedate'] = due_date
+        data_fields['duedate'] = due_date
 
-    json = {'fields': json_fields}
+    data = {'fields': data_fields}
 
-    return json
+    return data
 
 def check_is_editing_something(match: Any) -> bool:
     '''Checks if an editing match is actually going to do editing. It is
